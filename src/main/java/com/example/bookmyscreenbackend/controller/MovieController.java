@@ -3,7 +3,8 @@ package com.example.bookmyscreenbackend.controller;
 import com.example.bookmyscreenbackend.model.Movie;
 import com.example.bookmyscreenbackend.service.MovieService;
 import org.springframework.web.bind.annotation.*;
-
+import com.example.bookmyscreenbackend.dto.MovieRequest;
+import jakarta.validation.Valid;
 import java.util.List;
 
 // MOVIE CONTROLLER
@@ -21,9 +22,29 @@ public class MovieController {
 
     // CREATE - Add a new movie.
     @PostMapping
-    public Movie addMovie(@RequestBody Movie movie) {
+    public Movie addMovie(@Valid @RequestBody MovieRequest movieRequest) {
+
+        // Convert MovieRequest data into Movie entity.
+        Movie movie = new Movie();
+
+        movie.setTitle(movieRequest.getTitle());
+        movie.setDescription(movieRequest.getDescription());
+        movie.setDuration(movieRequest.getDuration());
+        movie.setGenre(movieRequest.getGenre());
+        movie.setLanguage(movieRequest.getLanguage());
+        movie.setReleaseDate(movieRequest.getReleaseDate());
+        movie.setPosterUrl(movieRequest.getPosterUrl());
+        movie.setBannerUrl(movieRequest.getBannerUrl());
+        movie.setTrailerUrl(movieRequest.getTrailerUrl());
+        movie.setCertificate(movieRequest.getCertificate());
+        movie.setRating(movieRequest.getRating());
+        movie.setIsActive(movieRequest.getIsActive());
+
+        // Save movie in MySQL.
         return movieService.addMovie(movie);
     }
+
+
 
     // READ ALL - Get all movies.
     @GetMapping
