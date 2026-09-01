@@ -5,8 +5,10 @@ import com.example.bookmyscreenbackend.service.TheaterService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import com.example.bookmyscreenbackend.dto.TheaterRequest;
+import jakarta.validation.Valid;
 import java.util.List;
+
 // THEATER CONTROLLER
 // Receives theater API requests and sends them to TheaterService.
 
@@ -21,11 +23,21 @@ public class TheaterController {
         this.theaterService = theaterService;
     }
 
-    // CREATE - Add a new theater.
+    // CREATE - Validate theater data, convert DTO to Theater, then save.
     @PostMapping
     public ResponseEntity<Theater> createTheater(
-            @RequestBody Theater theater) {
+            @Valid @RequestBody TheaterRequest request) {
 
+        // Convert TheaterRequest DTO into Theater entity.
+        Theater theater = new Theater();
+
+        theater.setName(request.getName());
+        theater.setLocation(request.getLocation());
+        theater.setLogo(request.getLogo());
+        theater.setCity(request.getCity());
+        theater.setState(request.getState());
+
+        // Save theater in MySQL.
         Theater savedTheater = theaterService.createTheater(theater);
 
         return ResponseEntity
