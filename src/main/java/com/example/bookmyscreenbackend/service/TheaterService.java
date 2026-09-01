@@ -19,7 +19,7 @@ public class TheaterService {
     }
 
     // CREATE - save a new theater.
-    public Theater CreateTheater(Theater theater) {
+    public Theater createTheater(Theater theater) {
         return theaterRepository.save(theater);
     }
 
