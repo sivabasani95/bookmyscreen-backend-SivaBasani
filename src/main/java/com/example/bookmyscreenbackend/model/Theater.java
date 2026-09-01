@@ -3,10 +3,11 @@ package com.example.bookmyscreenbackend.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-// Represents the "theaters" table in MySQL
+// Represents the "theaters" table in MySQL.
 @Entity
 @Table(name = "theaters")
 public class Theater {
+
     // Unique ID for each theater.
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,7 +21,7 @@ public class Theater {
     @Column(nullable = false)
     private String location;
 
-    // Theater logo URL;
+    // Theater logo URL.
     @Column(nullable = false)
     private String logo;
 
@@ -32,12 +33,14 @@ public class Theater {
     @Column(nullable = false)
     private String state;
 
-    // Automatically stores when theater was updated.
+    // Stores when the theater was created.
+    private LocalDateTime createdAt;
+
+    // Stores when the theater was last updated.
     private LocalDateTime updatedAt;
 
-    // JPA requires an empty Constructor.
-    public Theater(){
-
+    // JPA requires an empty constructor.
+    public Theater() {
     }
 
     // Set timestamps when theater is first saved.
@@ -45,20 +48,20 @@ public class Theater {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-
     }
 
     // Update timestamp when theater changes.
     @PreUpdate
-    protected void onUpdated() {
+    protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-
     }
 
-// Getters and setters
+    // Getters and setters
+
     public Long getId() {
         return id;
     }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -66,6 +69,7 @@ public class Theater {
     public String getName() {
         return name;
     }
+
     public void setName(String name) {
         this.name = name;
     }
@@ -73,6 +77,7 @@ public class Theater {
     public String getLocation() {
         return location;
     }
+
     public void setLocation(String location) {
         this.location = location;
     }
@@ -80,6 +85,7 @@ public class Theater {
     public String getLogo() {
         return logo;
     }
+
     public void setLogo(String logo) {
         this.logo = logo;
     }
@@ -87,6 +93,7 @@ public class Theater {
     public String getCity() {
         return city;
     }
+
     public void setCity(String city) {
         this.city = city;
     }
@@ -94,36 +101,16 @@ public class Theater {
     public String getState() {
         return state;
     }
+
     public void setState(String state) {
         this.state = state;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
     }
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
