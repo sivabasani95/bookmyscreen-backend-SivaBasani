@@ -44,8 +44,6 @@ public class MovieController {
         return movieService.addMovie(movie);
     }
 
-
-
     // READ ALL - Get all movies.
     @GetMapping
     public List<Movie> getAllMovies() {
