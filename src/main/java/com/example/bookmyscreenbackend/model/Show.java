@@ -1,82 +1,105 @@
 package com.example.bookmyscreenbackend.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-// Represents one movie show in a theater.
+// Represents one movie screening at a theater.
 @Entity
 @Table(name = "shows")
 public class Show {
-    // Unique ID for each show.
+
+    // Unique ID for every show.
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-// Movie playing in this show
+    // Movie playing in this show.
+    // Many shows can belong to one movie.
     @ManyToOne
-    @JoinColumn(name = "movie_id")
+    @JoinColumn(name = "movie_id", nullable = false)
     private Movie movie;
 
     // Theater where this show is playing.
+    // Many shows can belong to one theater.
     @ManyToOne
-    @JoinColumn(name = "theater_id")
+    @JoinColumn(name = "theater_id", nullable = false)
     private Theater theater;
 
-    // Location of the show .
+    // Location where the show is available.
     @Column(nullable = false)
     private String location;
 
-    //Example: 2D, 3D, IMAX, PVR, PXL.
+    // Viewing format such as 2D, 3D, IMAX, or PVR PXL.
+    // Helps users select the movie experience.
+    @Column(nullable = false)
+    private String format;
+
+    // Audio technology used for the show.
+    // Dolby Atmos is the default value.
+    private String audioType = "Dolby Atmos";
+
+    // Time when the movie starts.
+    // LocalTime stores only the time of day.
+    @Column(nullable = false)
+    private LocalTime startTime;
+
+    // Date when the movie is shown.
     @Column(nullable = false)
     private LocalDate date;
 
-    // Stores ticket price for different seat types.
+    // Stores ticket prices for different seat categories.
+    // Example: NORMAL = 270, EXECUTIVE = 290, PREMIUM = 510.
     @ElementCollection
     @CollectionTable(
-            name = "show_price_map",
+            name = "show_prices",
             joinColumns = @JoinColumn(name = "show_id")
     )
     @MapKeyColumn(name = "seat_type")
     @Column(name = "price")
     private Map<String, Double> priceMap = new HashMap<>();
 
-    // Automatically stores when show was created.
+    // Stores all seats belonging to this show.
+    // Seat information is stored in the show_seats table.
+    @OneToMany(
+            mappedBy = "show",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @JsonManagedReference
+    private List<ShowSeat> seatLayout = new ArrayList<>();
+
+    // Stores when the show was created.
     private LocalDateTime createdAt;
 
-    // Automatically stores when show was updated.
+    // Stores when the show was last updated.
     private LocalDateTime updatedAt;
 
     // JPA requires an empty constructor.
     public Show() {
-
     }
 
-    // Set timestamps when show is first saved.
+    // Automatically sets timestamps when a show is created.
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 
-    // Update timestamp when show changes.
+    // Automatically updates the timestamp when show data changes.
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
 
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+    // Getters and setters
 
     public Long getId() {
         return id;
@@ -110,6 +133,30 @@ public class Show {
         this.location = location;
     }
 
+    public String getFormat() {
+        return format;
+    }
+
+    public void setFormat(String format) {
+        this.format = format;
+    }
+
+    public String getAudioType() {
+        return audioType;
+    }
+
+    public void setAudioType(String audioType) {
+        this.audioType = audioType;
+    }
+
+    public LocalTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalTime startTime) {
+        this.startTime = startTime;
+    }
+
     public LocalDate getDate() {
         return date;
     }
@@ -126,11 +173,19 @@ public class Show {
         this.priceMap = priceMap;
     }
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
+    public List<ShowSeat> getSeatLayout() {
+        return seatLayout;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setSeatLayout(List<ShowSeat> seatLayout) {
+        this.seatLayout = seatLayout;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
     }
 }

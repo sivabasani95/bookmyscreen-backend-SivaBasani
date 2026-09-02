@@ -67,4 +67,6 @@ public class TheaterController {
         return theaterService.getTheaterById(id);
     }
 
+
+
 }
