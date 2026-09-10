@@ -58,10 +58,15 @@ public class ShowDataSeeder implements CommandLineRunner {
             return;
         }
 
-        // Create shows for today and tomorrow.
-        // This keeps the sample booking dates current.
+        // Create show dates for today and the next six days.
+        // This allows show timings to work for the full seven-day week.
         LocalDate today = LocalDate.now();
-        LocalDate tomorrow = today.plusDays(1);
+
+        List<LocalDate> showDates = new ArrayList<>();
+
+        for (int i = 0; i < 7; i++) {
+            showDates.add(today.plusDays(i));
+        }
 
         // Different show times used throughout the day.
         List<LocalTime> timeSlots = List.of(
@@ -81,14 +86,16 @@ public class ShowDataSeeder implements CommandLineRunner {
 
         List<Show> shows = new ArrayList<>();
 
-        // Use a few movies and Missouri theaters for sample booking data.
-        // This keeps the seeder small and easy to test.
-        List<Movie> selectedMovies = movies.stream()
-                .limit(3)
-                .toList();
+        // Use all movies so every movie can have show timings.
+        // This allows the frontend to display shows for any selected movie.
+        List<Movie> selectedMovies = movies;
 
+        // Use Missouri theaters because the frontend searches shows by state.
+        // This matches the state value returned from LocationContext.
         List<Theater> selectedTheaters = theaters.stream()
-                .filter(theater -> "Missouri".equalsIgnoreCase(theater.getState()))
+                .filter(theater ->
+                        "Missouri".equalsIgnoreCase(theater.getState())
+                )
                 .limit(4)
                 .toList();
 
@@ -97,13 +104,15 @@ public class ShowDataSeeder implements CommandLineRunner {
             return;
         }
 
-        // Create shows for selected movies, theaters, dates, and time slots.
-        // Each show also receives prices and a generated seat layout.
+        // Create shows for all movies, theaters, seven dates, and time slots.
+        // Each show also receives ticket prices and a generated seat layout.
         for (Movie movie : selectedMovies) {
 
             for (Theater theater : selectedTheaters) {
 
-                for (LocalDate showDate : List.of(today, tomorrow)) {
+                // Creates shows for today and the next six days.
+                // This matches the seven date buttons shown in the frontend.
+                for (LocalDate showDate : showDates) {
 
                     for (int i = 0; i < timeSlots.size(); i++) {
 
@@ -111,17 +120,30 @@ public class ShowDataSeeder implements CommandLineRunner {
 
                         show.setMovie(movie);
                         show.setTheater(theater);
+
+                        // Store the theater state for location-based show searches.
+                        // Example: Missouri.
                         show.setLocation(theater.getState());
-                        show.setFormat(formats.get(i % formats.size()));
+
+                        show.setFormat(
+                                formats.get(i % formats.size())
+                        );
+
                         show.setAudioType("Dolby 7.1");
-                        show.setStartTime(timeSlots.get(i));
+
+                        show.setStartTime(
+                                timeSlots.get(i)
+                        );
+
                         show.setDate(showDate);
 
                         // Set different ticket prices by seat category.
                         show.setPriceMap(generatePriceMap());
 
                         // Generate default AVAILABLE seats for the show.
-                        show.setSeatLayout(generateSeatLayout(show));
+                        show.setSeatLayout(
+                                generateSeatLayout(show)
+                        );
 
                         shows.add(show);
                     }
@@ -133,7 +155,9 @@ public class ShowDataSeeder implements CommandLineRunner {
         // Cascade settings also save the seats for each show.
         showRepository.saveAll(shows);
 
-        System.out.println("Shows seeded successfully: " + shows.size());
+        System.out.println(
+                "Shows seeded successfully: " + shows.size()
+        );
     }
 
     // Creates the ticket prices used for every sample show.
