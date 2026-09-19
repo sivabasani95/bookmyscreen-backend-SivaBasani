@@ -48,6 +48,9 @@ public class AuthService {
         // Find the existing user using the verified email.
         User user = userService.getUserByEmail(email);
 
+        // Activate the user after successful OTP verification.
+        user = userService.activateUser(user.getId());
+
         // Generate a short-lived access token.
         String accessToken =
                 tokenService.generateAccessToken(user);
