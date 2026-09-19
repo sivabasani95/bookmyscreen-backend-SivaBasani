@@ -52,7 +52,7 @@ public class UserService {
         User user = getUserById(id);
 
         // Change the user's account status to active.
-        user.setActiveUser(true);
+        user.setActivateUser(true);
 
         // Save the updated user in MySQL.
         return userRepository.save(user);

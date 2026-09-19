@@ -125,6 +125,4 @@ public class User {
         return updatedAt;
     }
 
-    public void setActiveUser(boolean b) {
-    }
 }

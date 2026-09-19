@@ -30,6 +30,12 @@
         <java.version>21</java.version>
     </properties>
     <dependencies>
+        <!-- Used to send OTP emails -->
+        <!-- Allows Spring Boot to send OTP emails to users -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
 
         <!-- Creates and verifies JWT tokens -->
         <dependency>
