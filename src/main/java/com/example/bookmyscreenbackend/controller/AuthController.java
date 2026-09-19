@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -38,35 +39,37 @@ public class AuthController {
         );
     }
 
-    // Receives the user's email and OTP and checks whether the OTP is valid.
+    // Verifies the OTP and logs in the user.
     @PostMapping("/verify-otp")
-    public ResponseEntity<Map<String, String>> verifyOtp(
+    public ResponseEntity<Map<String, Object>> verifyOtp(
             @Valid @RequestBody VerifyOtpRequest request) {
 
-        // Ask AuthService to verify the OTP entered by the user.
-        boolean isValid = authService.verifyOtp(
-                request.getEmail(),
-                request.getOtp()
-        );
+        // Verify the OTP and get the user with authentication tokens.
+        Map<String, Object> authResponse =
+                authService.verifyOtp(
+                        request.getEmail(),
+                        request.getOtp()
+                );
 
-        // Return an error response if the OTP is incorrect or expired.
-        if (!isValid) {
+        // Return an error when the OTP is incorrect or expired.
+        if (authResponse == null) {
+
+            // Create the error response.
+            Map<String, Object> errorResponse = new HashMap<>();
+
+            // Add the error message.
+            errorResponse.put(
+                    "message",
+                    "Invalid or expired OTP."
+            );
+
+            // Return HTTP 400 Bad Request.
             return ResponseEntity
                     .badRequest()
-                    .body(
-                            Map.of(
-                                    "message",
-                                    "Invalid or expired OTP."
-                            )
-                    );
+                    .body(errorResponse);
         }
 
-        // Return a success response when the OTP is correct.
-        return ResponseEntity.ok(
-                Map.of(
-                        "message",
-                        "OTP verified successfully."
-                )
-        );
+        // Return the user and authentication tokens after successful login.
+        return ResponseEntity.ok(authResponse);
     }
 }
