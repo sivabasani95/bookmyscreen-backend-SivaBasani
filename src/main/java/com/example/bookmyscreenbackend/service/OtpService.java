@@ -31,16 +31,16 @@ public class OtpService {
         this.mailSender = mailSender;
     }
 
-    // Generates a random 6-digit OTP.
+    // Generates a random 4-digit OTP.
     public String generateOtp() {
-        int otp = 100000 + random.nextInt(900000);
+        int otp = 1000 + random.nextInt(9000);
         return String.valueOf(otp);
     }
 
     // Generates, stores, and sends a new OTP to the user's email.
     public void sendOtp(String email) {
 
-        // Generate a new 6-digit OTP.
+        // Generate a new 4-digit OTP.
         String otp = generateOtp();
 
         // Set the OTP to expire after 2 minutes.

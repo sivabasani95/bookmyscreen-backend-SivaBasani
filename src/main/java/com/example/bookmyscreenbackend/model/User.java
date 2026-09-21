@@ -1,9 +1,11 @@
+
+
 package com.example.bookmyscreenbackend.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
-// Represents a user stored in the database.
+// Represents a user stored in the MySQL database.
 @Entity
 @Table(name = "users")
 public class User {
@@ -13,8 +15,8 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Stores the user's name.
-    @Column(nullable = false)
+    // Stores the user's name after the user completes account setup.
+    // Name can be null before the user completes Step 3.
     private String name;
 
     // Stores the user's email and prevents duplicate emails.
@@ -26,9 +28,11 @@ public class User {
     private String role = "user";
 
     // Stores the user's phone number.
+    // Phone can be null before the user completes Step 3.
     private String phone;
 
     // Indicates whether the user's account has been activated.
+    // New users start with false.
     @Column(nullable = false)
     private boolean activateUser = false;
 
@@ -105,7 +109,7 @@ public class User {
         this.phone = phone;
     }
 
-    // Returns whether the user is activated.
+    // Returns whether the user's account has been activated.
     public boolean isActivateUser() {
         return activateUser;
     }
@@ -120,9 +124,18 @@ public class User {
         return createdAt;
     }
 
+    // Updates when the user was created.
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
     // Returns when the user was last updated.
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
 
+    // Updates when the user was last updated.
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

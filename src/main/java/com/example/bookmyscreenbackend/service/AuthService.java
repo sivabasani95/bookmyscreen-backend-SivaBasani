@@ -1,3 +1,5 @@
+
+
 package com.example.bookmyscreenbackend.service;
 
 import com.example.bookmyscreenbackend.model.User;
@@ -29,54 +31,54 @@ public class AuthService {
         this.tokenService = tokenService;
     }
 
-    // Generates and sends an OTP to the user's email.
+    // Generates and sends an OTP to the user's email address.
     public void sendOtp(String email) {
+
+        // Ask OtpService to generate, store, and email the 4-digit OTP.
         otpService.sendOtp(email);
     }
 
-    // Verifies the OTP and logs in the user.
+    // Verifies the OTP and returns authentication information for the user.
     public Map<String, Object> verifyOtp(String email, String otp) {
 
-        // Check whether the OTP is correct and has not expired.
+        // Check whether the entered OTP is correct and has not expired.
         boolean isValid = otpService.verifyOtp(email, otp);
 
-        // Stop authentication if the OTP is invalid.
+        // Stop authentication when the OTP is incorrect or expired.
         if (!isValid) {
             return null;
         }
 
-        // Find the existing user using the verified email.
-        User user = userService.getUserByEmail(email);
+        // Find the user in MySQL using the verified email address.
+        User user = userService.findOrCreateUser(email);
 
-        // Activate the user after successful OTP verification.
-        user = userService.activateUser(user.getId());
-
-        // Generate a short-lived access token.
+        // Generate a short-lived access token for the verified user.
         String accessToken =
                 tokenService.generateAccessToken(user);
 
-        // Generate a longer-lived refresh token.
+        // Generate a longer-lived refresh token for the verified user.
         String refreshToken =
                 tokenService.generateRefreshToken(user);
 
-        // Save the refresh token in MySQL.
+        // Store the refresh token in MySQL so it can be used later.
         tokenService.storeRefreshToken(user, refreshToken);
 
-        // Create the response returned after successful login.
+        // Create the response that will be returned to the React frontend.
         Map<String, Object> response = new HashMap<>();
 
-        // Tell the frontend that authentication succeeded.
+        // Tell the frontend that the OTP verification was successful.
         response.put("auth", true);
 
-        // Return the logged-in user's information.
+        // Return the user so React can check the activateUser value.
         response.put("user", user);
 
-        // Return the access token.
+        // Return the access token to the React frontend.
         response.put("accessToken", accessToken);
 
-        // Return the refresh token.
+        // Return the refresh token to the React frontend.
         response.put("refreshToken", refreshToken);
 
+        // Return all authentication information to the controller.
         return response;
     }
 }
