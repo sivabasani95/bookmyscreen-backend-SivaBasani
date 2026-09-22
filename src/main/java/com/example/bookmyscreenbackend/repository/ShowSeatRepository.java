@@ -3,6 +3,7 @@ package com.example.bookmyscreenbackend.repository;
 import com.example.bookmyscreenbackend.model.ShowSeat;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 // Handles database operations for show seats.
@@ -14,4 +15,7 @@ public interface ShowSeatRepository extends JpaRepository<ShowSeat, Long> {
             String row,
             Integer number
     );
+
+    // Finds all seats belonging to a specific show.
+    List<ShowSeat> findByShowId(Long showId);
 }

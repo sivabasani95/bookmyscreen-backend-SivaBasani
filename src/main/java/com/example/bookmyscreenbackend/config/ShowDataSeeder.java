@@ -1,3 +1,5 @@
+
+
 package com.example.bookmyscreenbackend.config;
 
 import com.example.bookmyscreenbackend.model.Movie;
@@ -7,6 +9,7 @@ import com.example.bookmyscreenbackend.model.ShowSeat;
 import com.example.bookmyscreenbackend.model.Theater;
 import com.example.bookmyscreenbackend.repository.MovieRepository;
 import com.example.bookmyscreenbackend.repository.ShowRepository;
+import com.example.bookmyscreenbackend.repository.ShowSeatRepository;
 import com.example.bookmyscreenbackend.repository.TheaterRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -19,56 +22,116 @@ import java.util.List;
 import java.util.Map;
 
 // SHOW DATA SEEDER
-// Creates sample shows after movies and theaters already exist in MySQL.
+// Creates sample shows and makes sure every show has seats.
 @Component
 public class ShowDataSeeder implements CommandLineRunner {
 
     private final MovieRepository movieRepository;
     private final TheaterRepository theaterRepository;
     private final ShowRepository showRepository;
+    private final ShowSeatRepository showSeatRepository;
 
-    // Constructor injection gives this seeder access to the required repositories.
-    // Shows depend on existing movies and theaters.
+    // Constructor injection gives this seeder access
+    // to the required repositories.
     public ShowDataSeeder(
             MovieRepository movieRepository,
             TheaterRepository theaterRepository,
-            ShowRepository showRepository) {
+            ShowRepository showRepository,
+            ShowSeatRepository showSeatRepository) {
 
         this.movieRepository = movieRepository;
         this.theaterRepository = theaterRepository;
         this.showRepository = showRepository;
+        this.showSeatRepository = showSeatRepository;
     }
 
     @Override
     public void run(String... args) {
 
-        // Prevent duplicate shows when the application restarts.
-        // If shows already exist, the seeder stops here.
+        // =====================================================
+        // EXISTING SHOWS
+        // =====================================================
+        // If shows already exist, do NOT create duplicate shows.
+        // Instead, check whether each show has seats.
         if (showRepository.count() > 0) {
+
+            List<Show> existingShows =
+                    showRepository.findAll();
+
+            for (Show show : existingShows) {
+
+                // Get all seats belonging to this show.
+                List<ShowSeat> existingSeats =
+                        showSeatRepository.findByShowId(
+                                show.getId()
+                        );
+
+                // If this show has no seats,
+                // create the default 90-seat layout.
+                if (existingSeats.isEmpty()) {
+
+                    List<ShowSeat> seats =
+                            generateSeatLayout(show);
+
+                    show.setSeatLayout(seats);
+
+                    // CascadeType.ALL in Show.java
+                    // saves the seats automatically.
+                    showRepository.save(show);
+                }
+            }
+
+            // Existing shows have now been checked,
+            // so do not create duplicate shows.
             return;
         }
 
-        // Get movies and theaters that were already seeded.
-        // Shows cannot be created without both records.
-        List<Movie> movies = movieRepository.findAll();
-        List<Theater> theaters = theaterRepository.findAll();
 
+        // =====================================================
+        // NEW DATABASE / NO SHOWS EXIST
+        // =====================================================
+
+        // Get movies and theaters already stored in MySQL.
+        List<Movie> movies =
+                movieRepository.findAll();
+
+        List<Theater> theaters =
+                theaterRepository.findAll();
+
+        // Shows cannot be created without
+        // movies and theaters.
         if (movies.isEmpty() || theaters.isEmpty()) {
-            System.out.println("Movies or theaters are missing. Show seeding skipped.");
+
+            System.out.println(
+                    "Movies or theaters are missing. " +
+                            "Show seeding skipped."
+            );
+
             return;
         }
 
-        // Create show dates for today and the next six days.
-        // This allows show timings to work for the full seven-day week.
+
+        // =====================================================
+        // CREATE SHOW DATES
+        // =====================================================
+
+        // Create shows for today and the next six days.
         LocalDate today = LocalDate.now();
 
-        List<LocalDate> showDates = new ArrayList<>();
+        List<LocalDate> showDates =
+                new ArrayList<>();
 
         for (int i = 0; i < 7; i++) {
-            showDates.add(today.plusDays(i));
+            showDates.add(
+                    today.plusDays(i)
+            );
         }
 
-        // Different show times used throughout the day.
+
+        // =====================================================
+        // SHOW TIMES
+        // =====================================================
+
         List<LocalTime> timeSlots = List.of(
                 LocalTime.of(9, 0),
                 LocalTime.of(12, 30),
@@ -76,7 +139,11 @@ public class ShowDataSeeder implements CommandLineRunner {
                 LocalTime.of(19, 30)
         );
 
-        // Different viewing formats available for shows.
+
+        // =====================================================
+        // MOVIE FORMATS
+        // =====================================================
+
         List<String> formats = List.of(
                 "2D",
                 "3D",
@@ -84,127 +151,255 @@ public class ShowDataSeeder implements CommandLineRunner {
                 "PVR PXL"
         );
 
-        List<Show> shows = new ArrayList<>();
 
-        // Use all movies so every movie can have show timings.
-        // This allows the frontend to display shows for any selected movie.
+        // Stores all newly generated shows.
+        List<Show> shows =
+                new ArrayList<>();
+
+
+        // =====================================================
+        // SELECT MOVIES
+        // =====================================================
+
+        // Use all movies so every movie can
+        // have show timings.
         List<Movie> selectedMovies = movies;
 
-        // Use Missouri theaters because the frontend searches shows by state.
-        // This matches the state value returned from LocationContext.
-        List<Theater> selectedTheaters = theaters.stream()
-                .filter(theater ->
-                        "Missouri".equalsIgnoreCase(theater.getState())
-                )
-                .limit(4)
-                .toList();
+
+        // =====================================================
+        // SELECT THEATERS
+        // =====================================================
+
+        // Use Missouri theaters because the frontend
+        // searches shows using the state.
+        List<Theater> selectedTheaters =
+                theaters.stream()
+                        .filter(theater ->
+                                "Missouri".equalsIgnoreCase(
+                                        theater.getState()
+                                )
+                        )
+                        .limit(4)
+                        .toList();
 
         if (selectedTheaters.isEmpty()) {
-            System.out.println("No Missouri theaters found. Show seeding skipped.");
+
+            System.out.println(
+                    "No Missouri theaters found. " +
+                            "Show seeding skipped."
+            );
+
             return;
         }
 
-        // Create shows for all movies, theaters, seven dates, and time slots.
-        // Each show also receives ticket prices and a generated seat layout.
+
+        // =====================================================
+        // CREATE SHOWS
+        // =====================================================
+
+        // Create shows for:
+        //
+        // every movie
+        // every selected theater
+        // seven dates
+        // four time slots
+        //
+        // Every show also receives prices and seats.
         for (Movie movie : selectedMovies) {
 
             for (Theater theater : selectedTheaters) {
 
-                // Creates shows for today and the next six days.
-                // This matches the seven date buttons shown in the frontend.
                 for (LocalDate showDate : showDates) {
 
-                    for (int i = 0; i < timeSlots.size(); i++) {
+                    for (int i = 0;
+                         i < timeSlots.size();
+                         i++) {
 
                         Show show = new Show();
 
+                        // Set movie.
                         show.setMovie(movie);
+
+                        // Set theater.
                         show.setTheater(theater);
 
-                        // Store the theater state for location-based show searches.
-                        // Example: Missouri.
-                        show.setLocation(theater.getState());
-
-                        show.setFormat(
-                                formats.get(i % formats.size())
+                        // Store theater state.
+                        show.setLocation(
+                                theater.getState()
                         );
 
-                        show.setAudioType("Dolby 7.1");
+                        // Set movie format.
+                        show.setFormat(
+                                formats.get(
+                                        i % formats.size()
+                                )
+                        );
 
+                        // Set audio type.
+                        show.setAudioType(
+                                "Dolby 7.1"
+                        );
+
+                        // Set show start time.
                         show.setStartTime(
                                 timeSlots.get(i)
                         );
 
-                        show.setDate(showDate);
+                        // Set show date.
+                        show.setDate(
+                                showDate
+                        );
 
-                        // Set different ticket prices by seat category.
-                        show.setPriceMap(generatePriceMap());
+                        // Add ticket prices.
+                        show.setPriceMap(
+                                generatePriceMap()
+                        );
 
-                        // Generate default AVAILABLE seats for the show.
+                        // Create the default seat layout.
                         show.setSeatLayout(
                                 generateSeatLayout(show)
                         );
 
+                        // Add show to the list.
                         shows.add(show);
                     }
                 }
             }
         }
 
-        // saveAll() inserts all generated shows into MySQL.
-        // Cascade settings also save the seats for each show.
+
+        // =====================================================
+        // SAVE SHOWS
+        // =====================================================
+
+        // CascadeType.ALL in Show.java also saves
+        // every ShowSeat belonging to each show.
         showRepository.saveAll(shows);
 
         System.out.println(
-                "Shows seeded successfully: " + shows.size()
+                "Shows seeded successfully: "
+                        + shows.size()
         );
     }
 
-    // Creates the ticket prices used for every sample show.
-    // These values match the seat categories in your project.
+
+    // =========================================================
+    // GENERATE TICKET PRICES
+    // =========================================================
+
+    // Creates ticket prices used by every show.
     private Map<String, Double> generatePriceMap() {
 
-        Map<String, Double> prices = new HashMap<>();
+        Map<String, Double> prices =
+                new HashMap<>();
 
-        prices.put("PREMIUM", 15.00);
-        prices.put("EXECUTIVE", 12.00);
-        prices.put("NORMAL", 10.00);
+        prices.put(
+                "PREMIUM",
+                15.00
+        );
+
+        prices.put(
+                "EXECUTIVE",
+                12.00
+        );
+
+        prices.put(
+                "NORMAL",
+                10.00
+        );
 
         return prices;
     }
 
-    // Creates the default seat layout for every show.
-    // Rows A-D have 20 seats and Row E has 10 seats.
-    private List<ShowSeat> generateSeatLayout(Show show) {
 
-        List<ShowSeat> seats = new ArrayList<>();
+    // =========================================================
+    // GENERATE SEAT LAYOUT
+    // =========================================================
 
-        for (char row = 'A'; row <= 'D'; row++) {
+    // Creates 90 seats for one show.
+    //
+    // NORMAL:
+    // A1 - A20
+    //
+    // EXECUTIVE:
+    // B1 - B20
+    // C1 - C20
+    // D1 - D20
+    //
+    // PREMIUM:
+    // E1 - E10
+    //
+    // Total = 90 seats.
+    private List<ShowSeat> generateSeatLayout(
+            Show show) {
 
-            for (int number = 1; number <= 20; number++) {
+        List<ShowSeat> seats =
+                new ArrayList<>();
 
-                ShowSeat seat = new ShowSeat();
 
-                seat.setRow(String.valueOf(row));
+        // =====================================================
+        // ROWS A - D
+        // =====================================================
+
+        // Create 20 seats in each row.
+        for (char row = 'A';
+             row <= 'D';
+             row++) {
+
+            for (int number = 1;
+                 number <= 20;
+                 number++) {
+
+                ShowSeat seat =
+                        new ShowSeat();
+
+                // Example: A, B, C, D.
+                seat.setRow(
+                        String.valueOf(row)
+                );
+
+                // Example: 1 - 20.
                 seat.setNumber(number);
-                seat.setStatus(SeatStatus.AVAILABLE);
+
+                // New seats start as available.
+                seat.setStatus(
+                        SeatStatus.AVAILABLE
+                );
+
+                // Connect this seat to its show.
                 seat.setShow(show);
 
                 seats.add(seat);
             }
         }
 
-        for (int number = 1; number <= 10; number++) {
 
-            ShowSeat seat = new ShowSeat();
+        // =====================================================
+        // ROW E
+        // =====================================================
+
+        // Premium row has 10 seats.
+        for (int number = 1;
+             number <= 10;
+             number++) {
+
+            ShowSeat seat =
+                    new ShowSeat();
 
             seat.setRow("E");
+
             seat.setNumber(number);
-            seat.setStatus(SeatStatus.AVAILABLE);
+
+            seat.setStatus(
+                    SeatStatus.AVAILABLE
+            );
+
+            // Connect this seat to its show.
             seat.setShow(show);
 
             seats.add(seat);
         }
+
 
         return seats;
     }
