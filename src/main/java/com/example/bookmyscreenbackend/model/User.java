@@ -1,10 +1,6 @@
-
-
 package com.example.bookmyscreenbackend.model;
-
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-
 // Represents a user stored in the MySQL database.
 @Entity
 @Table(name = "users")

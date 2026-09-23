@@ -1,8 +1,4 @@
-
-
-
 package com.example.bookmyscreenbackend.controller;
-
 import com.example.bookmyscreenbackend.dto.BookingRequest;
 import com.example.bookmyscreenbackend.model.Booking;
 import com.example.bookmyscreenbackend.service.BookingService;

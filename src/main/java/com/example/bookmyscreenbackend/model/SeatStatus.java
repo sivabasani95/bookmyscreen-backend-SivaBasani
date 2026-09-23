@@ -1,10 +1,14 @@
 package com.example.bookmyscreenbackend.model;
 
-// Defines the possible status of a theater seat.
-// A seat can be available, booked, or temporarily blocked.
+// Represents the current booking status of a seat.
 public enum SeatStatus {
-    AVAILABLE,
-    BOOKED,
-    BLOCKED
 
+    // Seat is available and can be selected.
+    AVAILABLE,
+
+    // Seat has already been booked.
+    BOOKED,
+
+    // Seat is temporarily unavailable.
+    BLOCKED
 }
